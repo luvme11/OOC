@@ -211,6 +211,27 @@
   .fc .sz{font-size:11px;color:var(--dim);flex:none}
   .fc a.dl{flex:none;border:1px solid rgba(110,150,240,.6);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#cfe0ff;background:rgba(15,32,84,.8);transition:.15s}
   .fc a.dl:hover{background:var(--blue);color:#02040a}
+
+  /* ===== 비밀글: SECURITY CHECK ===== */
+  #pwm{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(2,4,10,.62);backdrop-filter:blur(3px)}
+  #pwm[hidden]{display:none}
+  .pwc{--sh:62px;width:min(380px,92vw);border-radius:12px;background:linear-gradient(135deg,#12296a,#091a47);animation:pop .18s ease-out;-webkit-mask:radial-gradient(circle 9px at 0 calc(100% - var(--sh)),transparent 97%,#000),radial-gradient(circle 9px at 100% calc(100% - var(--sh)),transparent 97%,#000);-webkit-mask-composite:source-in;mask:radial-gradient(circle 9px at 0 calc(100% - var(--sh)),transparent 97%,#000),radial-gradient(circle 9px at 100% calc(100% - var(--sh)),transparent 97%,#000);mask-composite:intersect}
+  .pwh{display:flex;justify-content:space-between;padding:13px 20px 9px;font-size:9px;font-weight:700;letter-spacing:.24em;color:var(--blue);border-bottom:1px solid rgba(150,180,255,.2)}
+  .pwb{padding:18px 22px 14px;text-align:center}
+  .pwb .lk{width:56px;height:56px;fill:none;stroke:var(--blue);stroke-width:1.5;margin-bottom:8px;filter:drop-shadow(0 0 6px #7ea4ff)}
+  .pwt{font-size:18px;font-weight:800;letter-spacing:.02em}
+  .pwn{font-size:12px;font-weight:600;color:#cfe0ff;margin:5px 0 4px;word-break:break-all}
+  .pwd{font-size:11px;color:var(--dim);margin-bottom:14px}
+  .pwi{position:relative}
+  .pwi input{padding:11px 40px;text-align:center;border-radius:8px}
+  .pwi .eye{position:absolute;right:9px;top:50%;transform:translateY(-50%);background:none;border:0;padding:4px;cursor:pointer;color:var(--dim);display:flex}
+  .pwi .eye:hover{color:#fff}
+  .pwe{min-height:18px;margin-top:7px;font-size:11px;color:#f2b457}
+  .pwf{height:var(--sh);padding:0 20px;border-top:2px dashed rgba(150,180,255,.35);background:rgba(3,8,24,.45);display:flex;align-items:center;gap:8px;border-radius:0 0 12px 12px}
+  .pwf .bar{width:80px;height:18px;background:repeating-linear-gradient(90deg,#cfe0ff 0 2px,transparent 2px 4px,#cfe0ff 4px 5px,transparent 5px 8px);opacity:.6}
+  .pwf .sp{flex:1}
+  .pwf .ab{padding:7px 20px;font-size:12px}
+  .pwf .ab:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -267,8 +288,26 @@
       <textarea id="pbody" placeholder="내용을 적어주세요" oninput="cnt()"></textarea>
       <div class="tools" style="margin-top:10px"><button class="ab sm" onclick="$('pfile').click()">+ 파일 첨부 (HTML 등)</button><input type="file" id="pfile" multiple hidden onchange="pickFiles(this)"><span style="font-size:11px;color:var(--dim)">파일당 5MB까지 · 저장하면 GitHub에 올라가요</span></div>
       <div id="pfl"></div>
+      <div class="tools" style="margin-top:10px;align-items:center"><label style="display:flex;gap:6px;align-items:center;font-size:12px;cursor:pointer"><input type="checkbox" id="psec" onchange="$('ppw').hidden=!this.checked;if(this.checked)$('ppw').focus()"> 🔒 비밀글</label><input type="text" id="ppw" placeholder="비밀번호" autocomplete="off" hidden style="width:200px"></div>
+      <div style="font-size:11px;color:var(--dim);line-height:1.7">비밀글은 내용이 암호화돼서 저장돼요. 제목·날짜는 목록에 보여요. 비밀번호를 잃어버리면 내용을 복구할 수 없어요.</div>
     </div>
     <div class="afoot"><span id="pc">0자</span><button class="pri" onclick="savePost()">저장 (GitHub)</button><button onclick="closePe()">닫기</button></div>
+  </div>
+</div>
+
+<!-- 비밀번호 입력 팝업 -->
+<div id="pwm" hidden>
+  <div class="pwc">
+    <div class="pwh"><span>SECURITY CHECK</span><span>RESTRICTED</span></div>
+    <div class="pwb">
+      <svg class="lk" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2"/></svg>
+      <div class="pwt">비밀글이에요</div>
+      <div class="pwn" id="pwn"></div>
+      <div class="pwd">글쓴이가 정한 비밀번호를 입력하면 읽을 수 있어요.</div>
+      <div class="pwi"><input type="password" id="pwin" placeholder="비밀번호를 입력해 주세요" autocomplete="off"><button class="eye" id="pweye" type="button" aria-label="비밀번호 보기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
+      <div class="pwe" id="pwe"></div>
+    </div>
+    <div class="pwf"><span class="bar"></span><span class="sp"></span><button class="ab" id="pwcan" type="button">취소</button><button class="ab pri" id="pwok" type="button">확인</button></div>
   </div>
 </div>
 
@@ -341,6 +380,20 @@ const $=id=>document.getElementById(id);
 const DEF={categories:[{name:"카테고리 예시 1",posts:[{title:"글 제목 1",date:"2026.10.25",body:"글 내용을 여기에 적어주세요."}]},{name:"카테고리 예시 2",posts:[]}],links:[{title:"링크 예시",image:"",url:"#"}]};
 let DATA=DEF;
 const clone=o=>JSON.parse(JSON.stringify(o));
+/* ===== 비밀글: 암호화 (AES-GCM + PBKDF2) ===== */
+const b64=u=>{const a=new Uint8Array(u);let t='';for(let i=0;i<a.length;i+=8192)t+=String.fromCharCode.apply(null,a.subarray(i,i+8192));return btoa(t)};
+const ub=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function ckey(pw,salt){if(!window.crypto||!crypto.subtle)throw new Error('nosub');const m=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function enc(pw,obj){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),k=await ckey(pw,salt),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,new TextEncoder().encode(JSON.stringify(obj)));return{s:b64(salt),i:b64(iv),c:b64(ct)}}
+async function dec(pw,e){const k=await ckey(pw,ub(e.s)),pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:ub(e.i)},k,ub(e.c));return JSON.parse(new TextDecoder().decode(pt))}
+/* 비밀번호 팝업: check(pw)가 성공하면 그 결과를, 취소하면 null을 돌려줘요 */
+function askPw(name,check){return new Promise(res=>{const m=$('pwm'),inp=$('pwin'),er=$('pwe'),ok=$('pwok'),cn=$('pwcan');
+  $('pwn').textContent=name||'';inp.value='';inp.type='password';er.textContent='';m.hidden=false;setTimeout(()=>inp.focus(),30);
+  const done=v=>{m.hidden=true;ok.onclick=cn.onclick=inp.onkeydown=$('pweye').onclick=null;res(v)};
+  const go=async()=>{const pw=inp.value;if(!pw){er.textContent='비밀번호를 입력해 주세요.';return}ok.disabled=true;er.textContent='확인하는 중…';
+    try{const r=await check(pw);ok.disabled=false;done(r)}catch(e){ok.disabled=false;er.textContent=e&&e.message==='nosub'?'https 주소에서만 비밀글을 열 수 있어요.':'비밀번호가 맞지 않아요.';inp.select()}};
+  ok.onclick=go;cn.onclick=()=>done(null);inp.onkeydown=e=>{if(e.key==='Enter')go()};$('pweye').onclick=()=>{inp.type=inp.type==='password'?'text':'password'}})}
+const SEC={};
 /* ===== BGM (YouTube) ===== */
 const BG={id:'',list:'',vol:40};let YP=null,YR=false,YWANT=false,TT=null;
 function toast(m){let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=m;e.classList.add('show');clearTimeout(TT);TT=setTimeout(()=>e.classList.remove('show'),2600)}
@@ -407,7 +460,7 @@ function closeOv(){ov.hidden=true}
 const pad=n=>String(n+1).padStart(2,'0');
 function openCats(){show(DATA.categories.length?'<div class="sub">SELECT DESTINATION</div><div class="lst">'+DATA.categories.map((c,i)=>`<a class="rw" onclick="openPosts(${i})"><div class="tm"><div class="lb">BOARDING PASS · GATE ${pad(i)}</div><span class="nm">${esc(c.name)}</span><div class="rt"><span>SEL</span><i></i><span>GATE ${pad(i)}</span></div></div><div class="sb"><span class="lb">POSTS</span><span class="ct">${c.posts.length}</span><span class="bar"></span></div></a>`).join('')+'</div>':'<p class="empty">등록된 카테고리가 없어요.</p>','CATEGORY',null)}
 const seat=j=>(j+1)+'ABCDEF'[j%6];
-function openPosts(i){const c=DATA.categories[i];show(c.posts.length?`<div class="sub">DEPARTURES · GATE ${pad(i)} · ${esc(c.name)}</div><div class="lst">`+c.posts.map((p,j)=>`<a class="rw mini" onclick="openPost(${i},${j})"><div class="tm"><div class="lb">FLIGHT OC${pad(i)}${pad(j)} · DEP ${esc(p.date)}</div><span class="nm">${esc(p.title)}</span><div class="rt"><span>SEL</span><i></i><span>GATE ${pad(i)}</span></div></div><div class="sb"><span class="lb">SEAT</span><span class="ct">${seat(j)}</span><span class="bar"></span></div></a>`).join('')+'</div>':'<div class="sub">DEPARTURES</div><p class="empty">✈ 예정된 항공편이 없어요. (아직 글이 없어요)</p>',c.name,openCats)}
+function openPosts(i){const c=DATA.categories[i];show(c.posts.length?`<div class="sub">DEPARTURES · GATE ${pad(i)} · ${esc(c.name)}</div><div class="lst">`+c.posts.map((p,j)=>`<a class="rw mini" onclick="openPost(${i},${j})"><div class="tm"><div class="lb">FLIGHT OC${pad(i)}${pad(j)} · DEP ${esc(p.date)}</div><span class="nm">${p.secret?'🔒 ':''}${esc(p.title)}</span><div class="rt"><span>SEL</span><i></i><span>GATE ${pad(i)}</span></div></div><div class="sb"><span class="lb">SEAT</span><span class="ct">${seat(j)}</span><span class="bar"></span></div></a>`).join('')+'</div>':'<div class="sub">DEPARTURES</div><p class="empty">✈ 예정된 항공편이 없어요. (아직 글이 없어요)</p>',c.name,openCats)}
 function postDoc(body){
   body=body||'';
   const html=/<\/?[a-z][^>]*>/i.test(body);
@@ -419,7 +472,9 @@ function bindCopy(d){d.addEventListener('click',ev=>{const b=ev.target.closest&&
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>msg('복사됨!'),()=>msg('복사 실패'));else msg('복사 실패')})}
 function fileList(p){const a=(p.files||[]).filter(f=>f&&safeImg(f.path));if(!a.length)return'';return '<div class="fl"><div class="fh">첨부파일 '+a.length+'</div>'+a.map(f=>{const ext=(String(f.name||'').split('.').pop()||'FILE').slice(0,4).toUpperCase();return '<div class="fc"><span class="ty">'+esc(ext)+'</span><span class="fn">'+esc(f.name)+'</span><span class="sz">'+fSize(f.size)+'</span><a class="dl" href="'+esc(encodeURI(f.path))+'" download="'+esc(f.name)+'">⤓ 다운로드</a></div>'}).join('')+'</div>'}
 function fitFrame(f){try{const d=f.contentDocument,fit=()=>{const h=d.documentElement.scrollHeight;if(h>0)f.style.height=h+'px'};bindCopy(d);fit();if(d.fonts&&d.fonts.ready)d.fonts.ready.then(fit);d.querySelectorAll('img').forEach(i=>i.addEventListener('load',fit));if(f.contentWindow.ResizeObserver)new f.contentWindow.ResizeObserver(fit).observe(d.body)}catch(e){}}
-function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" scrolling="no" onload="fitFrame(this)"></iframe>${fileList(p)}`,c.name,()=>openPosts(i))}
+async function openPost(i,j){const c=DATA.categories[i],p0=c.posts[j];let p=p0;
+ if(p0.secret&&p0.enc){const k=p0.enc.c.slice(0,24);if(SEC[k])p=SEC[k];else{const d=await askPw(p0.title||'SECRET',w=>dec(w,p0.enc));if(!d)return;p=SEC[k]=Object.assign({},p0,{body:d.body||'',files:d.files||[]})}}
+ show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" scrolling="no" onload="fitFrame(this)"></iframe>${fileList(p)}`,c.name,()=>openPosts(i))}
 function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safeImg(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null);ov.classList.add('lk')}
 
 /* 창 드래그 */
@@ -487,7 +542,7 @@ function render(){
     <div class="fld"><label>TOKEN (필수)</label><input type="password" id="g_t" value="${esc(GH.token)}" placeholder="github_pat_..."></div>
     <button class="ab pri" onclick="saveGH()">설정 저장 · 불러오기</button> <button class="ab dg" onclick="clearGH()">토큰 지우기</button>`;
   else if(tab==='posts'){
-    const rows=[];AD.categories.forEach((c,i)=>c.posts.forEach((p,j)=>rows.push(`<tr><td>${esc(p.title)}</td><td><span class="tag">${esc(c.name)}</span></td><td>${esc(p.date)}</td><td><button class="ab sm" onclick="openPe(${i},${j})">수정</button> <button class="ab sm dg" onclick="delPost(${i},${j})">삭제</button></td></tr>`)));
+    const rows=[];AD.categories.forEach((c,i)=>c.posts.forEach((p,j)=>rows.push(`<tr><td>${p.secret?'🔒 ':''}${esc(p.title)}</td><td><span class="tag">${esc(c.name)}</span></td><td>${esc(p.date)}</td><td><button class="ab sm" onclick="openPe(${i},${j})">수정</button> <button class="ab sm dg" onclick="delPost(${i},${j})">삭제</button></td></tr>`)));
     m.innerHTML=`<h3>게시글</h3><p class="desc">글을 쓰고 수정·삭제할 수 있어요. 삭제는 바로 GitHub에 반영돼요.</p><button class="ab pri" onclick="openPe()" style="margin-bottom:14px">+ 새 글</button>
     ${rows.length?`<table class="pl"><tr><th>제목</th><th>카테고리</th><th>날짜</th><th></th></tr>${rows.join('')}</table>`:'<p class="empty">아직 글이 없어요.</p>'}`;
   }else if(tab==='cats'){
@@ -580,12 +635,13 @@ function delLink(i){if(!confirm('이 링크를 삭제할까요?'))return;AD.link
 async function delPost(i,j){if(!confirm('이 글을 삭제할까요?'))return;const bak=AD.categories[i].posts.splice(j,1);render();if(!(await saveRemote())){AD.categories[i].posts.splice(j,0,bak[0]);render()}}
 
 /* 글쓰기 */
-function openPe(i,j){
+async function openPe(i,j){
   if(!AD.categories.length){st('먼저 카테고리를 하나 만들어 주세요.',1);go('cats');return}
   editing=(i==null)?null:{i,j};
-  const p=editing?AD.categories[i].posts[j]:{title:'',date:today(),body:''};
+  let p=editing?AD.categories[i].posts[j]:{title:'',date:today(),body:''},pw0='';
+  if(p.secret&&p.enc){const r=await askPw(p.title||'SECRET',async w=>({pw:w,data:await dec(w,p.enc)}));if(!r){editing=null;return}pw0=r.pw;p=Object.assign({},p,{body:r.data.body||'',files:r.data.files||[]})}
   $('pcat').innerHTML=AD.categories.map((c,k)=>`<option value="${k}" ${editing&&k===i?'selected':''}>${esc(c.name)}</option>`).join('');
-  PF=clone(p.files||[]);drawPF();$('ptitle').value=p.title;$('pdate').value=p.date;$('pbody').value=p.body;cnt();
+  PF=clone(p.files||[]);drawPF();$('psec').checked=!!p.secret;$('ppw').hidden=!p.secret;$('ppw').value=pw0;$('ptitle').value=p.title;$('pdate').value=p.date;$('pbody').value=p.body;cnt();
   $('pe').hidden=false;
 }
 function closePe(){$('pe').hidden=true;editing=null}
@@ -594,16 +650,21 @@ function wrap(a,b){const t=$('pbody'),s=t.selectionStart,e=t.selectionEnd,v=t.va
 async function savePost(){
   const title=$('ptitle').value.trim();
   if(!title){st('제목을 입력해 주세요.',1);$('ptitle').focus();return}
+  const sec=$('psec').checked,pw=$('ppw').value;
+  if(sec&&!pw){st('비밀번호를 입력해 주세요.',1);$('ppw').focus();return}
   try{if(PF.some(f=>f._b64))st('첨부파일 올리는 중…');
     for(let i=0;i<PF.length;i++){const f=PF[i];if(f._b64){const fp='files/'+Date.now()+'_'+i+'_'+f.name.replace(/[^\w.\-가-힣]/g,'_');await putFile(fp,f._b64);f.path=fp;delete f._b64}}
   }catch(e){st(e.message,1);return}
-  const p={title,date:$('pdate').value.trim()||today(),body:$('pbody').value,files:PF.map(f=>({name:f.name,size:f.size,path:f.path}))},ni=+$('pcat').value;
+  const fl=PF.map(f=>({name:f.name,size:f.size,path:f.path})),dt=$('pdate').value.trim()||today();let p;
+  if(sec){try{p={title,date:dt,secret:true,enc:await enc(pw,{body:$('pbody').value,files:fl})}}catch(e){st(e.message==='nosub'?'이 환경에서는 비밀글을 만들 수 없어요 (https 주소에서 열어 주세요).':'암호화에 실패했어요.',1);return}}
+  else p={title,date:dt,body:$('pbody').value,files:fl};
+  const ni=+$('pcat').value;
   const snap=clone(AD);
   if(editing&&editing.i===ni)AD.categories[ni].posts[editing.j]=p;
   else{if(editing)AD.categories[editing.i].posts.splice(editing.j,1);AD.categories[ni].posts.unshift(p)}
   if(await saveRemote()){closePe();render()}else{AD=snap}
 }
-addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('pe').hidden)closePe();else if(!$('adm').hidden)closeAdmin();else closeOv()}});
+addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('pwm').hidden){$('pwcan').click();return}if(!$('pe').hidden)closePe();else if(!$('adm').hidden)closeAdmin();else closeOv()}});
 </script>
 <script>
 /* 클릭 소리 — 작은 물방울 */
