@@ -1,0 +1,27 @@
+{
+  "categories": [
+    {
+      "name": "카테고리 예시 1",
+      "posts": []
+    },
+    {
+      "name": "카테고리 예시 2",
+      "posts": []
+    }
+  ],
+  "links": [
+    {
+      "title": "링크 예시",
+      "image": "",
+      "url": "#"
+    }
+  ],
+  "settings": {
+    "favicon": "",
+    "cursor": "",
+    "cx": 0,
+    "cy": 0,
+    "vol": 40,
+    "bgm": ""
+  }
+}
