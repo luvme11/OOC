@@ -26,7 +26,8 @@
 
   /* ===== 팝업 창 공통 ===== */
   #ov,#adm{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;background:#07102a;border:1px solid rgba(150,180,255,.45);border-radius:10px;box-shadow:0 24px 70px rgba(0,0,0,.75),0 0 34px rgba(60,100,220,.28);overflow:hidden;animation:pop .18s ease-out}
-  #ov{width:min(440px,92vw);height:min(400px,74vh);z-index:20}
+  #ov{width:min(540px,94vw);height:min(520px,84vh);z-index:20}
+  #ov.lk{width:min(256px,92vw);height:auto;max-height:min(520px,84vh)}
   #adm{width:min(880px,95vw);height:min(600px,86vh);z-index:30}
   #ov[hidden],#adm[hidden],#pe[hidden]{display:none}
   @keyframes pop{from{opacity:0;scale:.94}to{opacity:1;scale:1}}
@@ -154,11 +155,11 @@
   .bpb{height:var(--sh);margin:0 -16px;padding:0 16px;border-top:2px dashed rgba(150,180,255,.35);background:rgba(3,8,24,.45);display:flex;align-items:center;justify-content:space-between}
   .bpb .lb{font-size:8px;letter-spacing:.24em;color:var(--dim);font-weight:600}
   .bpb .bar{width:120px;height:20px;background:repeating-linear-gradient(90deg,#cfe0ff 0 2px,transparent 2px 4px,#cfe0ff 4px 5px,transparent 5px 8px);opacity:.6}
-  .pf{width:100%;height:120px;border:0;display:block;background:transparent}
+  .pf{width:100%;height:120px;border:0;display:block;background:transparent;overflow:hidden}
   /* ===== 링크 배너 200x60 ===== */
-  .bns{flex-direction:row;flex-wrap:wrap;gap:10px}
-  .bn{width:200px;height:60px}
-  .bn img,.bn .noimg{width:200px;height:60px;aspect-ratio:auto;object-fit:cover}
+  .bns{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:10px}
+  .bn{width:100%;max-width:200px;height:auto}
+  .bn img,.bn .noimg{width:100%;height:auto;aspect-ratio:10/3;object-fit:cover}
   .bn b{padding:12px 8px 4px;font-size:9px}
 
   /* ===== 관리자: 심플 ===== */
@@ -389,7 +390,7 @@ function fmt(t){
 }
 let backFn=null;
 function goBack(){if(backFn)backFn()}
-function show(h,t,b){ovc.innerHTML=h;ovc.scrollTop=0;$('tt').textContent=t;backFn=b;$('bk').hidden=!b;ov.hidden=false}
+function show(h,t,b){ov.classList.remove('lk');ovc.innerHTML=h;ovc.scrollTop=0;$('tt').textContent=t;backFn=b;$('bk').hidden=!b;ov.hidden=false}
 function closeOv(){ov.hidden=true}
 const pad=n=>String(n+1).padStart(2,'0');
 function openCats(){show(DATA.categories.length?'<div class="sub">SELECT DESTINATION</div><div class="lst">'+DATA.categories.map((c,i)=>`<a class="rw" onclick="openPosts(${i})"><div class="tm"><div class="lb">BOARDING PASS · GATE ${pad(i)}</div><span class="nm">${esc(c.name)}</span><div class="rt"><span>SEL</span><i></i><span>GATE ${pad(i)}</span></div></div><div class="sb"><span class="lb">POSTS</span><span class="ct">${c.posts.length}</span><span class="bar"></span></div></a>`).join('')+'</div>':'<p class="empty">등록된 카테고리가 없어요.</p>','CATEGORY',null)}
@@ -400,8 +401,9 @@ function postDoc(body){
   const html=/<\/?[a-z][^>]*>/i.test(body);
   return `<!doctype html><meta charset="utf-8"><base href="${location.href}" target="_blank"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><style>html,body{margin:0;background:transparent}body{font-family:'Pretendard Variable',Pretendard,-apple-system,'Malgun Gothic',sans-serif;font-size:13px;line-height:1.9;color:#cfd9f5;word-break:break-word;overflow-wrap:anywhere}${html?'':'body{white-space:pre-wrap}'}img{max-width:100%}a{color:#9bb8ff}hr{border:0;border-top:1px solid rgba(110,150,240,.22)}.q{display:block;border-left:2px solid #6f93f0;padding-left:10px;color:#7d8db5}.dm{color:#7d8db5}</style><body>${html?body:fmt(body)}</body>`;
 }
-function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" onload="try{this.style.height=this.contentDocument.documentElement.scrollHeight+'px'}catch(e){}"></iframe>`,c.name,()=>openPosts(i))}
-function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safeImg(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null)}
+function fitFrame(f){try{const d=f.contentDocument,fit=()=>{const h=d.documentElement.scrollHeight;if(h>0)f.style.height=h+'px'};fit();if(d.fonts&&d.fonts.ready)d.fonts.ready.then(fit);d.querySelectorAll('img').forEach(i=>i.addEventListener('load',fit));if(f.contentWindow.ResizeObserver)new f.contentWindow.ResizeObserver(fit).observe(d.body)}catch(e){}}
+function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" scrolling="no" onload="fitFrame(this)"></iframe>`,c.name,()=>openPosts(i))}
+function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safeImg(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null);ov.classList.add('lk')}
 
 /* 창 드래그 */
 function dragify(win,bar){let dx=0,dy=0,d=false;
