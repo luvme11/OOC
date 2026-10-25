@@ -450,6 +450,7 @@ async function saveRemote(){
 }
 async function openAdmin(){
   $('adm').hidden=false;
+  if(!AD)AD=norm(clone(DATA));
   if(!ready()){tab='gh';AD=norm(clone(DATA));render();st('GitHub 토큰을 입력해 주세요 (필수).',1);return}
   tab=tab==='gh'?'posts':tab;render();
   await loadRemote();render();
