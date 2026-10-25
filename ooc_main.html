@@ -376,6 +376,7 @@ fetch('data.json?'+Date.now()).then(r=>r.ok?r.json():Promise.reject()).then(d=>{
 const ov=$('ov'),ovc=$('ovc');
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const safe=u=>/^https?:\/\//i.test(u||'')?u:'#';
+const safeImg=u=>/^https?:\/\//i.test(u||'')||/^(?![a-z][a-z0-9+.-]*:|\/\/)[^\s"'<>]+$/i.test(u||'')?u:'';
 /* 글 본문 간단 서식 */
 function fmt(t){
   return esc(t)
@@ -400,7 +401,7 @@ function postDoc(body){
   return `<!doctype html><meta charset="utf-8"><base href="${location.href}" target="_blank"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"><style>html,body{margin:0;background:transparent}body{font-family:'Pretendard Variable',Pretendard,-apple-system,'Malgun Gothic',sans-serif;font-size:13px;line-height:1.9;color:#cfd9f5;word-break:break-word;overflow-wrap:anywhere}${html?'':'body{white-space:pre-wrap}'}img{max-width:100%}a{color:#9bb8ff}hr{border:0;border-top:1px solid rgba(110,150,240,.22)}.q{display:block;border-left:2px solid #6f93f0;padding-left:10px;color:#7d8db5}.dm{color:#7d8db5}</style><body>${html?body:fmt(body)}</body>`;
 }
 function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" onload="try{this.style.height=this.contentDocument.documentElement.scrollHeight+'px'}catch(e){}"></iframe>`,c.name,()=>openPosts(i))}
-function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safe(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null)}
+function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safeImg(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null)}
 
 /* 창 드래그 */
 function dragify(win,bar){let dx=0,dy=0,d=false;
@@ -436,7 +437,7 @@ async function saveRemote(){
   if(!ready()){st('토큰·저장소를 먼저 입력해야 저장할 수 있어요.',1);go('gh');return false}
   st('저장 중…');
   try{
-    const body={message:'update data.json (admin)',content:btoa(unescape(encodeURIComponent(JSON.stringify(AD,null,2)))),branch:GH.branch||'main'};
+    const body={message:'update data.json (admin)',content:btoa(unescape(encodeURIComponent(JSON.stringify(AD,(k,v)=>k[0]==='_'?undefined:v,2)))),branch:GH.branch||'main'};
     if(sha)body.sha=sha;
     const r=await ghReq('PUT',body);
     if(!r.ok){let m='저장 실패 ('+r.status+')';
@@ -444,7 +445,7 @@ async function saveRemote(){
       if(r.status===404)m='저장소/브랜치를 찾을 수 없어요. GitHub 설정을 확인해 주세요.';
       if(r.status===409||r.status===422)m='다른 곳에서 먼저 수정됐어요. 설정 탭에서 다시 불러온 뒤 시도해 주세요.';
       throw new Error(m)}
-    const j=await r.json();sha=j.content.sha;DATA=norm(clone(AD));st('저장했어요. 사이트 반영까지 1~2분 걸릴 수 있어요.');return true
+    const j=await r.json();sha=j.content.sha;DATA=norm(JSON.parse(JSON.stringify(AD,(k,v)=>k[0]==='_'?undefined:v)));st('저장했어요. 사이트 반영까지 1~2분 걸릴 수 있어요.');return true
   }catch(e){st(e.message,1);return false}
 }
 async function openAdmin(){
@@ -490,9 +491,9 @@ function render(){
       <div class="arow" style="margin-top:6px"><span class="c" style="color:var(--dim);font-size:10px">볼륨</span><input type="range" min="0" max="100" value="${S.vol}" style="flex:1" oninput="AD.settings.vol=+this.value;BG.vol=+this.value;document.getElementById('vl').textContent=this.value;if(YP&&YR)try{YP.setVolume(+this.value)}catch(e){}"><span id="vl" class="c" style="width:28px;color:var(--dim);font-size:11px">${S.vol}</span><button class="ab sm" onclick="previewBgm()">미리듣기</button></div></div>
     <button class="ab pri" onclick="saveSite()">저장 (GitHub)</button>`;
   }else if(tab==='links'){
-    m.innerHTML=`<h3>링크</h3><p class="desc">Link 창에 배너로 보여요. 배너 이미지는 200×60 크기로 만들어 https:// 주소를 넣어 주세요(없으면 제목만 표시).</p>
-    ${AD.links.map((l,i)=>`<div class="lrow"><div class="arow"><span class="n">${pad(i)}</span><input type="text" value="${esc(l.title)}" placeholder="제목" oninput="AD.links[${i}].title=this.value"><button class="ib" onclick="mv('links',${i},-1)">↑</button><button class="ib" onclick="mv('links',${i},1)">↓</button><button class="ib" onclick="delLink(${i})">✕</button></div><div class="arow"><input type="text" value="${esc(l.url)}" placeholder="이동할 주소 https://" oninput="AD.links[${i}].url=this.value"></div><div class="arow" style="margin:0"><input type="text" value="${esc(l.image)}" placeholder="배너 이미지 주소 https:// (200×60)" oninput="AD.links[${i}].image=this.value"></div></div>`).join('')}
-    <div style="display:flex;justify-content:space-between;margin-top:14px"><button class="ab" onclick="AD.links.push({title:'',image:'',url:''});render()">+ 링크 추가</button><button class="ab pri" onclick="saveRemote()">저장 (GitHub)</button></div>`;
+    m.innerHTML=`<h3>링크</h3><p class="desc">Link 창에 배너로 보여요. 배너 이미지는 파일로 업로드해 주세요. 자동으로 200×60 비율로 맞춰 저장소 images/ 폴더에 올라가요(없으면 제목만 표시).</p>
+    ${AD.links.map((l,i)=>`<div class="lrow"><div class="arow"><span class="n">${pad(i)}</span><input type="text" value="${esc(l.title)}" placeholder="제목" oninput="AD.links[${i}].title=this.value"><button class="ib" onclick="mv('links',${i},-1)">↑</button><button class="ib" onclick="mv('links',${i},1)">↓</button><button class="ib" onclick="delLink(${i})">✕</button></div><div class="arow"><input type="text" value="${esc(l.url)}" placeholder="이동할 주소 https://" oninput="AD.links[${i}].url=this.value"></div><div class="arow" style="margin:0"><img src="${esc(l._pv||l.image||'')}" style="width:100px;height:30px;object-fit:cover;border:1px solid var(--line);border-radius:4px;background:#050b1d;flex:none" alt=""><input type="file" accept="image/*" onchange="pickLinkImg(${i},this)" style="flex:1;font-size:11px;color:var(--dim)"><button class="ab sm dg" onclick="clearLinkImg(${i})">제거</button></div></div>`).join('')}
+    <div style="display:flex;justify-content:space-between;margin-top:14px"><button class="ab" onclick="AD.links.push({title:'',image:'',url:''});render()">+ 링크 추가</button><button class="ab pri" onclick="saveLinks()">저장 (GitHub)</button></div>`;
   }
 }
 let PEND={favicon:null,cursor:null};
@@ -510,6 +511,29 @@ async function putFile(path,b64){
   let s;const g=await fetch(u+'?ref='+encodeURIComponent(br)+'&t='+Date.now(),{headers:h});if(g.ok)s=(await g.json()).sha;
   const r=await fetch(u,{method:'PUT',headers:h,body:JSON.stringify({message:'upload '+path,content:b64,branch:br,sha:s})});
   if(!r.ok)throw new Error(path+' 업로드 실패 ('+r.status+')');
+}
+
+function pickLinkImg(i,inp){const f=inp.files[0];if(!f)return;
+  if(!/^image\//.test(f.type)){st('이미지 파일만 가능해요.',1);inp.value='';return}
+  const rd=new FileReader();
+  rd.onload=()=>{const img=new Image();img.onload=()=>{
+    const W=400,H=120,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+    const sc=Math.max(W/img.width,H/img.height),w=img.width*sc,h=img.height*sc;
+    x.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+    const url=c.toDataURL('image/png');
+    AD.links[i]._pend=url.split(',')[1];AD.links[i]._pv=url;
+    st('배너를 선택했어요. 저장을 눌러 주세요.');render()};
+    img.onerror=()=>st('이미지를 읽을 수 없어요.',1);img.src=rd.result};
+  rd.readAsDataURL(f);
+}
+function clearLinkImg(i){const l=AD.links[i];delete l._pend;delete l._pv;l.image='';render()}
+async function saveLinks(){
+  if(!ready()){st('토큰·저장소를 먼저 입력해야 저장할 수 있어요.',1);go('gh');return}
+  try{st('배너 올리는 중…');
+    for(let i=0;i<AD.links.length;i++){const l=AD.links[i];
+      if(l._pend){const p='images/link_'+Date.now()+'_'+i+'.png';await putFile(p,l._pend);l.image=p;delete l._pend;delete l._pv}}
+  }catch(e){st(e.message,1);return}
+  if(await saveRemote())render();
 }
 async function saveSite(){
   if(!ready()){st('토큰·저장소를 먼저 입력해야 저장할 수 있어요.',1);go('gh');return}
