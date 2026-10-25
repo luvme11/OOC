@@ -11,9 +11,19 @@
   ],
   "links": [
     {
-      "title": "링크 예시",
+      "title": "main",
       "image": "",
-      "url": "#"
+      "url": "https://luvme11.github.io/NEW-HOME/index.html"
+    },
+    {
+      "title": "chanhee",
+      "image": "",
+      "url": "https://luvme11.github.io/7/"
+    },
+    {
+      "title": "7",
+      "image": "",
+      "url": "https://luvme11.github.io/chanhee1/"
     }
   ],
   "settings": {
