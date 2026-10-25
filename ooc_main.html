@@ -201,6 +201,16 @@
   #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#0b1a42;border:1px solid var(--line);color:#cfe0ff;font-size:12px;padding:9px 16px;border-radius:6px;z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
   #toast.show{opacity:1}
   input[type=range]{accent-color:var(--blue);padding:0;width:100%}
+
+  /* ===== 첨부파일 ===== */
+  .fl{margin-top:18px}
+  .fl .fh{font-size:10px;letter-spacing:.18em;color:var(--dim);margin-bottom:8px;font-weight:600}
+  .fc{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(100deg,rgba(24,52,128,.45),rgba(7,16,42,.55));margin-bottom:8px}
+  .fc .ty{width:38px;height:38px;border-radius:8px;background:rgba(111,147,240,.18);color:#cfe0ff;font-size:10px;font-weight:800;letter-spacing:.04em;display:flex;align-items:center;justify-content:center;flex:none}
+  .fc .fn{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:600}
+  .fc .sz{font-size:11px;color:var(--dim);flex:none}
+  .fc a.dl{flex:none;border:1px solid rgba(110,150,240,.6);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;color:#cfe0ff;background:rgba(15,32,84,.8);transition:.15s}
+  .fc a.dl:hover{background:var(--blue);color:#02040a}
 </style>
 </head>
 <body>
@@ -255,6 +265,8 @@
         <button class="ab sm" onclick="wrap('<div style=&quot;&quot;>','</div>')">스타일 박스</button>
       </div>
       <textarea id="pbody" placeholder="내용을 적어주세요" oninput="cnt()"></textarea>
+      <div class="tools" style="margin-top:10px"><button class="ab sm" onclick="$('pfile').click()">+ 파일 첨부 (HTML 등)</button><input type="file" id="pfile" multiple hidden onchange="pickFiles(this)"><span style="font-size:11px;color:var(--dim)">파일당 5MB까지 · 저장하면 GitHub에 올라가요</span></div>
+      <div id="pfl"></div>
     </div>
     <div class="afoot"><span id="pc">0자</span><button class="pri" onclick="savePost()">저장 (GitHub)</button><button onclick="closePe()">닫기</button></div>
   </div>
@@ -405,8 +417,9 @@ function bindCopy(d){d.addEventListener('click',ev=>{const b=ev.target.closest&&
  const viaDoc=doc=>{try{const a=doc.createElement('textarea');a.value=t;a.setAttribute('readonly','');a.style.cssText='position:fixed;left:-9999px;top:0;opacity:0';doc.body.appendChild(a);a.focus();a.select();a.setSelectionRange(0,t.length);const r=doc.execCommand('copy');doc.body.removeChild(a);return r}catch(x){return false}};
  if(viaDoc(d)||viaDoc(document)){msg('복사됨!');return}
  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(()=>msg('복사됨!'),()=>msg('복사 실패'));else msg('복사 실패')})}
+function fileList(p){const a=(p.files||[]).filter(f=>f&&safeImg(f.path));if(!a.length)return'';return '<div class="fl"><div class="fh">첨부파일 '+a.length+'</div>'+a.map(f=>{const ext=(String(f.name||'').split('.').pop()||'FILE').slice(0,4).toUpperCase();return '<div class="fc"><span class="ty">'+esc(ext)+'</span><span class="fn">'+esc(f.name)+'</span><span class="sz">'+fSize(f.size)+'</span><a class="dl" href="'+esc(encodeURI(f.path))+'" download="'+esc(f.name)+'">⤓ 다운로드</a></div>'}).join('')+'</div>'}
 function fitFrame(f){try{const d=f.contentDocument,fit=()=>{const h=d.documentElement.scrollHeight;if(h>0)f.style.height=h+'px'};bindCopy(d);fit();if(d.fonts&&d.fonts.ready)d.fonts.ready.then(fit);d.querySelectorAll('img').forEach(i=>i.addEventListener('load',fit));if(f.contentWindow.ResizeObserver)new f.contentWindow.ResizeObserver(fit).observe(d.body)}catch(e){}}
-function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" scrolling="no" onload="fitFrame(this)"></iframe>`,c.name,()=>openPosts(i))}
+function openPost(i,j){const c=DATA.categories[i],p=c.posts[j];show(`<h3 class="pt">${esc(p.title)}</h3><div class="pd">${esc(p.date)}</div><iframe class="pf" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" srcdoc="${esc(postDoc(p.body))}" scrolling="no" onload="fitFrame(this)"></iframe>${fileList(p)}`,c.name,()=>openPosts(i))}
 function openLinks(){show(DATA.links.length?'<div class="bns">'+DATA.links.map(l=>`<a class="bn" href="${esc(safe(l.url))}" target="_blank" rel="noopener" title="${esc(l.title)}">${l.image?`<img src="${esc(safeImg(l.image))}" alt="">`:`<div class="noimg">${esc(l.title)}</div>`}<b>${esc(l.title)}</b></a>`).join('')+'</div>':'<p class="empty">등록된 링크가 없어요.</p>','LINK',null);ov.classList.add('lk')}
 
 /* 창 드래그 */
@@ -504,6 +517,10 @@ function render(){
   }
 }
 let PEND={favicon:null,cursor:null};
+let PF=[];
+function fSize(n){n=+n||0;return n>=1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB'}
+function drawPF(){$('pfl').innerHTML=PF.map((f,i)=>'<div class="arow"><span class="n">📎</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">'+esc(f.name)+'</span><span class="c">'+fSize(f.size)+(f._b64?' · 새 파일':'')+'</span><button class="ib" onclick="PF.splice('+i+',1);drawPF()">✕</button></div>').join('')}
+function pickFiles(inp){const fs=[...inp.files];inp.value='';fs.forEach(f=>{if(f.size>5*1048576){st(f.name+' 은(는) 5MB를 넘어서 올릴 수 없어요.',1);return}const rd=new FileReader();rd.onload=()=>{PF.push({name:f.name,size:f.size,_b64:String(rd.result).split(',')[1]});drawPF()};rd.readAsDataURL(f)})}
 function S0(k){PEND[k]=null;AD.settings[k]='';render()}
 function pickImg(k,inp){const f=inp.files[0];if(!f)return;
   if(f.type!=='image/png'){st('PNG 파일만 가능해요.',1);inp.value='';return}
@@ -568,7 +585,7 @@ function openPe(i,j){
   editing=(i==null)?null:{i,j};
   const p=editing?AD.categories[i].posts[j]:{title:'',date:today(),body:''};
   $('pcat').innerHTML=AD.categories.map((c,k)=>`<option value="${k}" ${editing&&k===i?'selected':''}>${esc(c.name)}</option>`).join('');
-  $('ptitle').value=p.title;$('pdate').value=p.date;$('pbody').value=p.body;cnt();
+  PF=clone(p.files||[]);drawPF();$('ptitle').value=p.title;$('pdate').value=p.date;$('pbody').value=p.body;cnt();
   $('pe').hidden=false;
 }
 function closePe(){$('pe').hidden=true;editing=null}
@@ -577,7 +594,10 @@ function wrap(a,b){const t=$('pbody'),s=t.selectionStart,e=t.selectionEnd,v=t.va
 async function savePost(){
   const title=$('ptitle').value.trim();
   if(!title){st('제목을 입력해 주세요.',1);$('ptitle').focus();return}
-  const p={title,date:$('pdate').value.trim()||today(),body:$('pbody').value},ni=+$('pcat').value;
+  try{if(PF.some(f=>f._b64))st('첨부파일 올리는 중…');
+    for(let i=0;i<PF.length;i++){const f=PF[i];if(f._b64){const fp='files/'+Date.now()+'_'+i+'_'+f.name.replace(/[^\w.\-가-힣]/g,'_');await putFile(fp,f._b64);f.path=fp;delete f._b64}}
+  }catch(e){st(e.message,1);return}
+  const p={title,date:$('pdate').value.trim()||today(),body:$('pbody').value,files:PF.map(f=>({name:f.name,size:f.size,path:f.path}))},ni=+$('pcat').value;
   const snap=clone(AD);
   if(editing&&editing.i===ni)AD.categories[ni].posts[editing.j]=p;
   else{if(editing)AD.categories[editing.i].posts.splice(editing.j,1);AD.categories[ni].posts.unshift(p)}
